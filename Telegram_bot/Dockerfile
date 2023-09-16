@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y libpq-dev
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 RUN pip install poetry
-RUN pip install python-telegram-bot
 RUN poetry config virtualenvs.create false && poetry install
 COPY . /app/
 CMD ["poetry", "run", "python", "py_telegram_bot"]

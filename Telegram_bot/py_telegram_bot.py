@@ -1,5 +1,7 @@
 import logging
 from telegram import Update
+from dotenv import load_dotenv
+import os
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 logging.basicConfig(
@@ -10,10 +12,10 @@ logging.basicConfig(
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello World")
-
+load_dotenv()
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('6136423165:AAGiMXdsz6rtm5HDnmTRe_Y0qs-nCpeG5Vo').build()
+    application = ApplicationBuilder().token(os.getenv('TOKEN')).build()
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
