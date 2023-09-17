@@ -30,7 +30,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, status) VALUES (?, ?, ?)",
                    (user_id, username, status))
     conn.commit()
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=Message_texts.GREETING)
+
+
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=Message_texts.GREETING)
+async def WhoIam(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    # Retrieve user information from the SQLite database
+    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    user_info = cursor.fetchone()
+
+    if user_info:
+        id, user_id, username, status = user_info
+        user_info_text = (f"User ID: {user_id}\n"
+                          f"Username: @{username}\n"
+                          f"status: {status}\n")
+
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text=user_info_text)
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="User information not found.")
 load_dotenv()
 
 if __name__ == '__main__':
@@ -38,5 +59,7 @@ if __name__ == '__main__':
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
+    users_handler = CommandHandler('WhoIam', WhoIam)
+    application.add_handler(users_handler)
 
     application.run_polling()
