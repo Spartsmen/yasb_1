@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+import Message_texts
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -29,7 +30,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, status) VALUES (?, ?, ?)",
                    (user_id, username, status))
     conn.commit()
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello World")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=Message_texts.GREETING)
 load_dotenv()
 
 if __name__ == '__main__':
