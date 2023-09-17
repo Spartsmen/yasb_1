@@ -2,6 +2,7 @@ import logging
 from telegram import Update
 from dotenv import load_dotenv
 import os
+import sqlite3
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 logging.basicConfig(
@@ -9,8 +10,25 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-
+conn = sqlite3.connect('user_data.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE,
+        username TEXT,
+        status TEXT
+    )
+''')
+conn.commit()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    user_id = user.id
+    username = user.username
+    status = 'not available'
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, username, status) VALUES (?, ?, ?)",
+                   (user_id, username, status))
+    conn.commit()
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello World")
 load_dotenv()
 
