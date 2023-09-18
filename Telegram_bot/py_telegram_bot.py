@@ -18,23 +18,36 @@ cursor.execute('''
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
         username TEXT,
-        status TEXT
+        role TEXT
+    )
+''')
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        role_name TEXT UNIQUE
     )
 ''')
 conn.commit()
+cursor.execute("INSERT OR IGNORE INTO roles (role_name) VALUES ('user')")
+cursor.execute("INSERT OR IGNORE INTO roles (role_name) VALUES ('admin')")
+conn.commit()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
     username = user.username
-    status = 'user'
-    cursor.execute("INSERT OR IGNORE INTO users (user_id, username, status) VALUES (?, ?, ?)",
-                   (user_id, username, status))
+    cursor.execute("SElECT role_name FROM roles WHERE id = 1 ")
+    role = cursor.fetchone()[0]
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
+                   (user_id, username, role))
     conn.commit()
-
 
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=Message_texts.GREETING)
-async def WhoIam(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+
+async def whoiam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
 
     # Retrieve user information from the SQLite database
@@ -42,10 +55,10 @@ async def WhoIam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_info = cursor.fetchone()
 
     if user_info:
-        id, user_id, username, status = user_info
+        id, user_id, username, role = user_info
         user_info_text = (f"User ID: {user_id}\n"
                           f"Username: @{username}\n"
-                          f"status: {status}\n")
+                          f"role: {role}\n")
 
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=user_info_text)
@@ -57,9 +70,9 @@ load_dotenv()
 if __name__ == '__main__':
     application = ApplicationBuilder().token(os.getenv('TOKEN')).build()
 
-    start_handler = CommandHandler('start', start)
+    start_handler = CommandHandler('Start', start)
     application.add_handler(start_handler)
-    users_handler = CommandHandler('WhoIam', WhoIam)
+    users_handler = CommandHandler('WhoIam', whoiam)
     application.add_handler(users_handler)
 
     application.run_polling()
