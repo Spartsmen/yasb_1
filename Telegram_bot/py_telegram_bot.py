@@ -26,7 +26,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
     username = user.username
-    status = 'not available'
+    status = 'user'
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, status) VALUES (?, ?, ?)",
                    (user_id, username, status))
     conn.commit()
