@@ -13,24 +13,24 @@ logging.basicConfig(
 
 conn = sqlite3.connect('user_data.db')
 cursor = conn.cursor()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
     username = user.username
-    cursor.execute("SElECT role_name FROM roles WHERE id = 1 ")
+    cursor.execute("SELECT role_name FROM roles WHERE id = 1")
     role = cursor.fetchone()[0]
-    cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
-                   (user_id, username, role))
-    conn.commit()
 
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
+                   (user_id, username,role))
+    conn.commit()
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=Message_texts.GREETING)
 
 
-async def whoiam(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def whoami(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-
-    # Retrieve user information from the SQLite database
     cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
     user_info = cursor.fetchone()
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     start_handler = CommandHandler('Start', start)
     application.add_handler(start_handler)
-    users_handler = CommandHandler('WhoIam', whoiam)
+    users_handler = CommandHandler('WhoamI', whoami)
     application.add_handler(users_handler)
 
     application.run_polling()

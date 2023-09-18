@@ -5,9 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2e0471bd-8e5f-431b-9ce3-29f691a7d174" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DataBase creation.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Deploy/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Deploy/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Telegram_bot/Message_texts.py" beforeDir="false" afterPath="$PROJECT_DIR$/Telegram_bot/Message_texts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Telegram_bot/py_telegram_bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/Telegram_bot/py_telegram_bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/create_db.sql" beforeDir="false" afterPath="$PROJECT_DIR$/create_db.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

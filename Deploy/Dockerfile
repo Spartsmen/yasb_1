@@ -6,4 +6,4 @@ COPY pyproject.toml poetry.lock /app/
 RUN pip install poetry
 RUN poetry config virtualenvs.create false && poetry install
 COPY . /app/
-CMD ["poetry", "run", "python", "py_telegram_bot"]
+CMD ["poetry", "run", "python", "py_telegram_bot.py"]
