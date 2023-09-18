@@ -12,27 +12,7 @@ logging.basicConfig(
 )
 
 conn = sqlite3.connect('user_data.db')
-cursor = conn.cursor()
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER UNIQUE,
-        username TEXT,
-        role TEXT
-    )
-''')
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        role_name TEXT UNIQUE
-    )
-''')
-conn.commit()
-cursor.execute("INSERT OR IGNORE INTO roles (role_name) VALUES ('user')")
-cursor.execute("INSERT OR IGNORE INTO roles (role_name) VALUES ('admin')")
-conn.commit()
-
-
+cursor =  conn.cursor()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
