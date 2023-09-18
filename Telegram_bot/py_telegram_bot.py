@@ -16,6 +16,11 @@ cursor = conn.cursor()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=Message_texts.GREETING)
+
+
+async def whoami(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
     username = user.username
@@ -23,14 +28,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     role = cursor.fetchone()[0]
 
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
-                   (user_id, username,role))
+                   (user_id, username, role))
     conn.commit()
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=Message_texts.GREETING)
-
-
-async def whoami(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
     cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
     user_info = cursor.fetchone()
 
@@ -38,7 +37,7 @@ async def whoami(update: Update, context: ContextTypes.DEFAULT_TYPE):
         id, user_id, username, role = user_info
         user_info_text = (f"User ID: {user_id}\n"
                           f"Username: @{username}\n"
-                          f"role: {role}\n")
+                          f"Role: {role}\n")
 
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=user_info_text)
