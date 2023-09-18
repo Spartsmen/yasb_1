@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 
 conn = sqlite3.connect('user_data.db')
-cursor =  conn.cursor()
+cursor = conn.cursor()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = user.id
