@@ -19,9 +19,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=Message_texts.GREETING)
 
-
-Client_id = '-4063636151'
-Support_id = '-4050412601'
+cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
+Client_id = cursor.fetchone()[0]
+cursor.execute('SELECT telegram_id FROM chats WHERE username = "support"')
+Support_id = cursor.fetchone()[0]
 
 async def save_message_to_db_client(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -37,13 +38,15 @@ async def save_message_to_db_client(update: Update, context: ContextTypes.DEFAUL
     message_id = update.message.message_id
     if 'reply_to' in context.user_data and update.message.reply_to_message:
         chat_id, message_id = context.user_data['reply_to']
-        await context.bot.send_message(chat_id=Client_id, text=update.message.text)
+        first_message_id = context.user_data.get('first_message_id')
+        await context.bot.send_message(chat_id=Client_id, text=update.message.text,reply_to_message_id=first_message_id)
         del context.user_data['reply_to']
     elif update.message.text.startswith('@yasb_testing_bot'):
+        context.user_data['first_message_id'] = update.message.message_id
         keyboard = [[InlineKeyboardButton('Reply', callback_data=f'reply_{chat_id}_{message_id}')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        forwarded_message = await context.bot.send_message(chat_id=-4050412601,
-                                                           text=(f'''{update.effective_user.username} is answering -
+        forwarded_message = await context.bot.send_message(chat_id=Support_id,
+                                                           text=(f'''{update.effective_user.username} is asking -
 {update.message.text}'''), reply_markup=reply_markup)
         await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
     else:
@@ -57,6 +60,7 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data['reply_to'] = (chat_id, message_id)
     await context.bot.send_message(chat_id=Support_id, text=f'{update.effective_user.username} is replying....',
                                    reply_markup=ForceReply())
+    await query.edit_message_reply_markup()
 
 
 load_dotenv()
