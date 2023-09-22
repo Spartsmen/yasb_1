@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import Message_texts
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -17,13 +16,14 @@ cursor = conn.cursor()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=Message_texts.GREETING)
+                                   text='Hello world!')
 
 
 cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
 Client_group_id = cursor.fetchone()[0]
 cursor.execute('SELECT telegram_id FROM chats WHERE username = "support"')
 Support_group_id = cursor.fetchone()[0]
+ticket_ids = {}
 
 
 async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,14 +38,28 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
 
     chat_id = update.message.chat_id
     message_id = update.message.message_id
+
+    if update.message.text.startswith('@yasb_testing_bot'):
+        user_id = update.effective_user.id
+        context.user_data[f'first_message_id_{user_id}'] = update.message.message_id
+        keyboard = [[InlineKeyboardButton('Reply', callback_data=f'reply_{chat_id}_{message_id}')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        cursor.execute('INSERT OR IGNORE INTO tickets (chat_id,client_id,helper_id) VALUES (?,?,?)', (Client_group_id,
+                                                                                                      user_id, None))
+        conn.commit()
+
+        await context.bot.send_message(chat_id=Support_group_id, text=(f'''{update.effective_user.username} is asking -
+    {update.message.text[18:]}'''), reply_markup=reply_markup)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
+
     if 'reply_to' in context.user_data and update.message.reply_to_message:
         chat_id, message_id = context.user_data['reply_to']
-        first_message_id = context.user_data.get(f'first_message_id_{user_id}')
+        question_id = context.user_data.get('question_id')
         keyboard = [[InlineKeyboardButton('Stop the dialog', callback_data=f'stop_{chat_id}_{message_id}'),
                      InlineKeyboardButton('Additional question', callback_data=f'question_{chat_id}_{message_id}')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await context.bot.send_message(chat_id=Client_group_id, text=update.message.text, reply_markup=reply_markup,
-                                       reply_to_message_id=first_message_id)
+                                       reply_to_message_id=question_id)
         del context.user_data['reply_to']
     elif 'additional_question' in context.user_data and context.user_data['additional_question']:
         context.user_data['additional_question'] = False
@@ -54,19 +68,6 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
         await context.bot.send_message(chat_id=Support_group_id, text=(f'''{update.effective_user.username} is asking -
     {update.message.text}'''), reply_markup=reply_markup)
         await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
-    elif update.message.text.startswith('@yasb_testing_bot'):
-        user_id = update.effective_user.id
-        context.user_data[f'first_message_id_{user_id}'] = update.message.message_id
-        keyboard = [[InlineKeyboardButton('Reply', callback_data=f'reply_{chat_id}_{message_id}')]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(chat_id=Support_group_id, text=(f'''{update.effective_user.username} is asking -
-    {update.message.text[18:]}'''), reply_markup=reply_markup)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
-    ticket_number = context.user_data.get('ticket_number')
-    message_text = update.message.text
-    cursor.execute("INSERT INTO messages (ticket_id, text) VALUES (?, ?)",
-                   (ticket_number, message_text))
-    conn.commit()
 
 
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -77,13 +78,12 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     if action == 'reply':
         context.user_data['reply_to'] = (chat_id, message_id)
+        context.user_data['question_id'] = message_id
         await context.bot.send_message(chat_id=Support_group_id,
                                        text=f'{update.effective_user.username} is replying....',
                                        reply_markup=ForceReply())
         await query.edit_message_reply_markup()
     elif action == 'stop':
-        if 'reply_to' in context.user_data:
-            del context.user_data['reply_to']
         await context.bot.send_message(chat_id=Support_group_id, text='The dialog has been stopped. Question closed.')
         await context.bot.send_message(chat_id=Client_group_id, text='The dialog has been stopped. Question closed.')
         await query.edit_message_reply_markup()
@@ -93,13 +93,6 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
         await context.bot.send_message(chat_id=Client_group_id, text='Please enter your additional question:',
                                        reply_markup=ForceReply())
 
-    client_id = update.effective_user.id
-    supporter_id = query.from_user.id
-    cursor.execute("INSERT OR IGNORE INTO tickets (chat_id,client_id, helper_id) VALUES (?, ?, ?)",
-                   (Client_group_id, client_id, supporter_id))
-    conn.commit()
-    cursor.execute(f'SELECT id FROM tickets WHERE client_id ={client_id}')
-    context.user_data['ticket_number'] = cursor.fetchone()[0]
 
 load_dotenv()
 
