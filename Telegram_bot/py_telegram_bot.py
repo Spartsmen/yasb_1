@@ -23,7 +23,7 @@ cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
 Client_group_id = cursor.fetchone()[0]
 cursor.execute('SELECT telegram_id FROM chats WHERE username = "support"')
 Support_group_id = cursor.fetchone()[0]
-ticket_ids = {}
+current_ticket_id = None
 
 
 async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -31,6 +31,7 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
     user_id = user.id
     username = user.username
     role = 'client'
+    global current_ticket_id
 
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
                    (user_id, username, role))
@@ -44,9 +45,11 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
         context.user_data[f'first_message_id_{user_id}'] = update.message.message_id
         keyboard = [[InlineKeyboardButton('Reply', callback_data=f'reply_{chat_id}_{message_id}')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        cursor.execute('INSERT OR IGNORE INTO tickets (chat_id,client_id,helper_id) VALUES (?,?,?)', (Client_group_id,
-                                                                                                      user_id, None))
+        cursor.execute('INSERT INTO tickets (chat_id,client_id,helper_id) VALUES (?,?,?)', (Client_group_id, user_id,
+                                                                                            None))
         conn.commit()
+        ticket_id = cursor.lastrowid
+        current_ticket_id = ticket_id
 
         await context.bot.send_message(chat_id=Support_group_id, text=(f'''{update.effective_user.username} is asking -
     {update.message.text[18:]}'''), reply_markup=reply_markup)
@@ -68,9 +71,13 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
         await context.bot.send_message(chat_id=Support_group_id, text=(f'''{update.effective_user.username} is asking -
     {update.message.text}'''), reply_markup=reply_markup)
         await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
+    ticket_id = context.user_data.get('ticket_id', 'No ticket')
+    cursor.execute("INSERT INTO messages (ticket_id, text) VALUES (?, ?)", (current_ticket_id, update.message.text))
+    conn.commit()
 
 
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global current_ticket_id
     query = update.callback_query
     await query.answer()
     chat_id, message_id = query.data.split('_')[1:]
@@ -79,6 +86,12 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
     if action == 'reply':
         context.user_data['reply_to'] = (chat_id, message_id)
         context.user_data['question_id'] = message_id
+        helper_id = update.effective_user.id
+        cursor.execute("UPDATE tickets SET helper_id = ? WHERE chat_id = ?", (helper_id, chat_id))
+        conn.commit()
+        ticket_id = cursor.lastrowid
+        print(ticket_id)
+        context.user_data['ticket_id'] = current_ticket_id
         await context.bot.send_message(chat_id=Support_group_id,
                                        text=f'{update.effective_user.username} is replying....',
                                        reply_markup=ForceReply())
@@ -87,6 +100,7 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
         await context.bot.send_message(chat_id=Support_group_id, text='The dialog has been stopped. Question closed.')
         await context.bot.send_message(chat_id=Client_group_id, text='The dialog has been stopped. Question closed.')
         await query.edit_message_reply_markup()
+        current_ticket_id = None
     elif action == 'question':
         context.user_data['additional_question'] = True
         await query.edit_message_reply_markup()
