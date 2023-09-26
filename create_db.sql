@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
         username TEXT,
-        FOREIGN KEY(role_id) REFERENCES roles(id);
+        role TEXT;
 
 
 
