@@ -66,23 +66,29 @@ async def set_client_group_id(update: Update, context: ContextTypes.DEFAULT_TYPE
     await context.bot.send_message(chat_id=update.effective_chat.id, text='Client group ID updated successfully.')
 
 
-cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
-Client_group_id = cursor.fetchone()[0]
 cursor.execute('SELECT telegram_id FROM chats WHERE username = "support"')
 Support_group_id = cursor.fetchone()[0]
+cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
+Client_group_id = cursor.fetchone()[0]
 current_ticket_id = None
 
 
 async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     global current_ticket_id
-
+    global Client_group_id
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username, role) VALUES (?, ?, ?)",
                    (user.id, user.username, 'client'))
     conn.commit()
 
     chat_id = update.message.chat_id
     message_id = update.message.message_id
+
+
+    print(chat_id, user.id)
+    if chat_id == user.id:
+         Client_group_id = chat_id
+    print(Client_group_id)
 
     if update.message.text.startswith('@yasb_testing_bot'):
         user_id = update.effective_user.id
@@ -121,6 +127,8 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
 
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global current_ticket_id
+    global Client_group_id
+
     query = update.callback_query
     await query.answer()
     chat_id, message_id = query.data.split('_')[1:]
@@ -142,6 +150,8 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
         await context.bot.send_message(chat_id=Client_group_id, text='The dialog has been stopped. Question closed.')
         await query.edit_message_reply_markup()
         current_ticket_id = None
+        cursor.execute('SELECT telegram_id FROM chats WHERE username = "client"')
+        Client_group_id = cursor.fetchone()[0]
     elif action == 'question':
         context.user_data['additional_question'] = True
         await query.edit_message_reply_markup()
