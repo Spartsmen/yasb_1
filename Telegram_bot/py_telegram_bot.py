@@ -80,18 +80,11 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
     chat_id = update.message.chat_id
     message_id = update.message.message_id
 
-
-    print(chat_id, user.id)
     if chat_id == user.id:
         Client_group_id = user.id
         context.user_data[user.id] = {'Client_group_id': user.id}
     else:
-        #context.user_data['ticket_id'] db
-        #Client_group_id = context.user_data['ticket_id']
         Client_group_id = context.user_data['reply_to'][0]
-
-
-    print(Client_group_id)
 
     if update.message.text.startswith('@yasb_testing_bot'):
         user_id = update.effective_user.id
@@ -107,7 +100,6 @@ async def manage_chat_interaction(update: Update, context: ContextTypes.DEFAULT_
         await context.bot.send_message(chat_id=update.effective_chat.id, text='Your message has been sent')
 
     if 'reply_to' in context.user_data and update.message.reply_to_message:
-        print(context.user_data, update.message.reply_to_message)
         chat_id, message_id = context.user_data['reply_to']
         question_id = context.user_data.get('question_id')
         keyboard = [[InlineKeyboardButton('Stop the dialog', callback_data=f'stop_{chat_id}_{message_id}'),
@@ -144,7 +136,6 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
         conn.commit()
         cursor.execute("SELECT id FROM tickets WHERE chat_id = ? ORDER BY id DESC LIMIT 1", (chat_id,))
         current_ticket_id = cursor.fetchone()[0]
-        print(current_ticket_id)
         context.user_data['ticket_id'] = current_ticket_id
         await context.bot.send_message(chat_id=Support_group_id,
                                        text=f'{update.effective_user.username} is replying....',
