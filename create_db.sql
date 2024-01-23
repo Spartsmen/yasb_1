@@ -2,17 +2,13 @@ CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
         username TEXT,
-        role TEXT;
+        role TEXT);
 
 
 
 CREATE TABLE IF NOT EXISTS roles (
      id INTEGER PRIMARY KEY AUTOINCREMENT,
-     role_name TEXT UNIQUE;
-
-CREATE TABLE IF NOT EXISTS roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        role_name TEXT UNIQUE;
+     role_name TEXT UNIQUE);
 
 
 INSERT OR IGNORE INTO roles (role_name) VALUES ('client');
